@@ -103,9 +103,15 @@ contains the maximum number of steps, max is **`r round(steps_interval[[which.ma
 **1. Calculate and report the total number of missing values in the dataset
 (i.e. the total number of rows with NAs)** 
 
-There are **`r sum(is.na(activity$steps))`** / **`r length(activity$steps)`**
-missing values, or **`r round(100*mean(is.na(activity$steps)), 1)`**%.
-(steps are the only value that is missing in the dataset)
+``` {r compute missing values}
+# variables to describe missing values in-line below
+missing_vals <- sum(is.na(activity$steps))
+total_vals <- length(activity$steps)
+pct_missing <- round(100*mean(is.na(activity$steps)), 1)
+```
+
+There are **`r missing_vals`** / **`r total_vals`** missing values, or 
+**`r pct_missing`**%. (steps are the only value that is missing in the dataset)
 
 **2. Devise a strategy for filling in all of the missing values in the dataset. The
 strategy does not need to be sophisticated. For example, you could use

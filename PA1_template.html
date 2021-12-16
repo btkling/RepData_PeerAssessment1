@@ -262,6 +262,10 @@ sg +
 <div id="imputing-missing-values" class="section level2">
 <h2>Imputing missing values</h2>
 <p><strong>1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)</strong></p>
+<pre class="r"><code># variables to describe missing values in-line below
+missing_vals &lt;- sum(is.na(activity$steps))
+total_vals &lt;- length(activity$steps)
+pct_missing &lt;- round(100*mean(is.na(activity$steps)), 1)</code></pre>
 <p>There are <strong>2304</strong> / <strong>17568</strong> missing values, or <strong>13.1</strong>%. (steps are the only value that is missing in the dataset)</p>
 <p><strong>2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.</strong></p>
 <pre class="r"><code># Examine where we see missing values
