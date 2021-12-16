@@ -9,7 +9,7 @@ output:
 ## Loading and preprocessing the data
 
 ```{r libraries, message=FALSE, warning=FALSE}
-
+# Load r libraries that we use
 library(dplyr)
 library(tibble)
 library(data.table)
@@ -36,9 +36,9 @@ activity <- as_tibble(fread("activity.csv"))
 
 
 ## What is mean total number of steps taken per day?
-```{r mean steps}
 
-# 1. Make a histogram of the total number of steps taken each day
+**1. Make a histogram of the total number of steps taken each day**
+```{r total steps hist}
 
 # get total steps 
 tsteps <- activity %>%
@@ -53,7 +53,11 @@ hg +
     labs(title = "Histogram of total steps taken in a day",
          x = "Total Steps",
          y = "Frequency (days)")
+```
 
+**2. Calculate and report the mean and median total number of steps taken per
+day**
+``` {r mean/median steps}
 # table of mean and median total steps in a day
 kable(
     tsteps %>%
@@ -68,9 +72,9 @@ kable(
 
 ## What is the average daily activity pattern?
 
-### 1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis)
-and the average number of steps taken, averaged across all days (y-axis)
-```{r}
+**1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) 
+and the average number of steps taken, averaged across all days (y-axis)**
+```{r plot daily activity}
 steps_interval <- activity %>%
     group_by(interval) %>%
     summarize(avg_daily_steps = mean(steps, na.rm = T))
@@ -83,55 +87,67 @@ sg +
     labs(title = "Average steps taken in each 5-minute interval",
          x = "Interval",
          y = "Avg. Daily Steps")
-
-# 2. Which 5-minute interval, on average across all the days in the dataset,
-# contains the maximum number of steps?
-steps_interval[which.max(steps_interval$avg_daily_steps),]
-
 ```
+
+**2. Which 5-minute interval, on average across all the days in the dataset, 
+contains the maximum number of steps?**
+
+Interval **`r steps_interval[[which.max(steps_interval$avg_daily_steps),1]] `**
+contains the maximum number of steps, max is **`r round(steps_interval[[which.max(steps_interval$avg_daily_steps),2]],2)`** steps.
 
 
 
 ## Imputing missing values
 
-1. Calculate and report the total number of missing values in the dataset
-(i.e. the total number of rows with NAs)  
-```{r total missing rows}
+**1. Calculate and report the total number of missing values in the dataset
+(i.e. the total number of rows with NAs)** 
 
-sum(is.na(activity$steps))
+There are **`r sum(is.na(activity$steps))`** / **`r length(activity$steps)`**
+missing values, or **`r round(100*mean(is.na(activity$steps)), 1)`**%.
+(steps are the only value that is missing in the dataset)
 
-mean(is.na(activity$steps))
-
-```
-
-
-2. Devise a strategy for filling in all of the missing values in the dataset. The
+**2. Devise a strategy for filling in all of the missing values in the dataset. The
 strategy does not need to be sophisticated. For example, you could use
-the mean/median for that day, or the mean for that 5-minute interval, etc.  
-```{r}
+the mean/median for that day, or the mean for that 5-minute interval, etc.**  
 
+```{r examine where missing values are}
+# Examine where we see missing values
 
+# count of intervals, grouped by percentage of missing values for that interval
+activity %>%
+    group_by(interval) %>%
+    summarize(total = n(),
+              missing = sum(is.na(steps))) %>%
+    mutate(pct_missing = round(100*missing/total,1)) %>%
+    group_by(pct_missing) %>%
+    summarize(number_of_intervals = n())
+
+# count of days grouped by percentage of missing values on that day
 activity %>%
     group_by(date) %>%
     summarize(total = n(),
-              missing = sum(is.na(steps)))
+              missing = sum(is.na(steps))) %>%
+    mutate(pct_missing = round(100*missing/total,1)) %>%
+    group_by(pct_missing) %>%
+    summarize(number_of_days = n())
+```
+*It would appear that days that have any missing values are fully empty. Imputing
+missing values by mean/median on a day would not work based on that. We will 
+instead impute by median for that interval*
 
-# it would appear that days that have any missing values are fully empty. 
-# imputing missing values by mean/median on a day would not work based on that
-# we will instead impute by median for that interval
+``` {r prep medians for imputation}
+# Prepare medians for imputation
 interval_medians <- activity %>%
     group_by(interval) %>%
     summarize(int_med = median(steps, na.rm = T))
-
-# this is somewhat naive and zero-skewed as the median is oftentimes zero for an 
-# interval, but mean will always be above zero which is not practical either.
-
-
 ```
+*(Consideration: this is somewhat naive and zero-skewed as the median is 
+oftentimes zero for an interval, but mean will always be above zero which is 
+not practical either.)*
 
 
-3. Create a new dataset that is equal to the original dataset but with the
-missing data filled in.  
+**3. Create a new dataset that is equal to the original dataset but with the
+missing data filled in.**  
 
 ```{r patch missing values}
 
@@ -143,13 +159,11 @@ activity_nomissing <- activity %>%
 ```
 
 
-4. Make a histogram of the total number of steps taken each day and Calculate
-and report the mean and median total number of steps taken per day. Do
-these values differ from the estimates from the first part of the assignment?
-What is the impact of imputing missing data on the estimates of the total
-daily number of steps?  
+**4. Make a histogram of the total number of steps taken each day and Calculate
+and report the mean and median total number of steps taken per day.**
+  
 
-```{r}
+```{r histo plot - round 2}
 
 tsteps_nomissing <- activity_nomissing %>%
     group_by(date) %>%
@@ -157,8 +171,14 @@ tsteps_nomissing <- activity_nomissing %>%
 
 ag <- ggplot(tsteps_nomissing, mapping = aes(total_steps))
 
-ag + geom_histogram(binwidth = 1000) 
-
+ag + 
+    geom_histogram(binwidth = 1000) + 
+    theme_bw() + 
+    labs(title = "Histogram of Total Daily Steps",
+         x = "Total Steps",
+         y = "Number of Days")
+```
+``` {r mean and median table - round 2}
 kable(
     tsteps_nomissing %>%
         summarize(mean_daily_steps = round(mean(total_steps, na.rm=T), 2),
@@ -169,9 +189,15 @@ kable(
 
 ```
 
+*Do
+these values differ from the estimates from the first part of the assignment?*
+
 We see that the median has been unchanged (since all values were imputed from 
 medians) but that the mean has increased (since missing values were removed and
 therefore treated as zero). 
+
+*What is the impact of imputing missing data on the estimates of the total
+daily number of steps?*
 
 The impact on imputation is that total steps will increase since NA's are 
 removed in prior calculations and now are being included.
@@ -181,11 +207,13 @@ removed in prior calculations and now are being included.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-For this part the weekdays() function may be of some help here. Use the dataset
-with the filled-in missing values for this part.
-1. Create a new factor variable in the dataset with two levels – “weekday”
+*For this part the weekdays() function may be of some help here. Use the dataset
+with the filled-in missing values for this part.*
+
+
+**1. Create a new factor variable in the dataset with two levels – “weekday”
 and “weekend” indicating whether a given date is a weekday or weekend
-day.
+day.**
 
 ```{r create weekpart factor}
 
@@ -200,11 +228,12 @@ activity_nomissing <- activity_nomissing %>%
 ```
 
 
-2. Make a panel plot containing a time series plot (i.e. type = "l") of the
+**2. Make a panel plot containing a time series plot (i.e. type = "l") of the
 5-minute interval (x-axis) and the average number of steps taken, averaged
-across all weekday days or weekend days (y-axis).
+across all weekday days or weekend days (y-axis).**
 
-```{r weekpart agg}
+```{r weekpart agg, message=FALSE}
+# Aggregate data by weekpart (weekday / weekend)
 
 wkpt_agg <- activity_nomissing %>%
     group_by(weekpart, interval) %>%
@@ -215,7 +244,7 @@ wkpt_agg <- activity_nomissing %>%
 
 
 ```{r plot weekday vs. weekend avg steps}
-
+# Plot the data
 wg <- ggplot(wkpt_agg, mapping = aes(interval, avg_steps))
 
 wg + 
@@ -230,6 +259,7 @@ wg +
 
 There are two noticeable patterns that can be observed when we compare weekday 
 and weekend activity:
+
 1. Activity seems to start and end later in the day on weekends vs weekdays
 2. There seems to be slightly higher average steps throughout the day on 
 weekends vs. weekdays
