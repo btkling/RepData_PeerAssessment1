@@ -75,6 +75,7 @@ kable(
 **1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) 
 and the average number of steps taken, averaged across all days (y-axis)**
 ```{r plot daily activity}
+# plot daily activity by interval
 steps_interval <- activity %>%
     group_by(interval) %>%
     summarize(avg_daily_steps = mean(steps, na.rm = T))
@@ -150,7 +151,7 @@ not practical either.)*
 missing data filled in.**  
 
 ```{r patch missing values}
-
+# patch missing values
 activity_nomissing <- activity %>%
     inner_join(interval_medians) %>%
     mutate(steps = ifelse(is.na(steps), int_med, steps)) %>%
@@ -164,7 +165,7 @@ and report the mean and median total number of steps taken per day.**
   
 
 ```{r histo plot - round 2}
-
+# histogram of total daily steps - using imputed missing values data
 tsteps_nomissing <- activity_nomissing %>%
     group_by(date) %>%
     summarize(total_steps = sum(steps))
@@ -178,7 +179,9 @@ ag +
          x = "Total Steps",
          y = "Number of Days")
 ```
+
 ``` {r mean and median table - round 2}
+# table of mean and median values
 kable(
     tsteps_nomissing %>%
         summarize(mean_daily_steps = round(mean(total_steps, na.rm=T), 2),

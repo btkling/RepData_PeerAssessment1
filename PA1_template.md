@@ -94,6 +94,7 @@ kable(
 and the average number of steps taken, averaged across all days (y-axis)**
 
 ```r
+# plot daily activity by interval
 steps_interval <- activity %>%
     group_by(interval) %>%
     summarize(avg_daily_steps = mean(steps, na.rm = T))
@@ -191,6 +192,7 @@ missing data filled in.**
 
 
 ```r
+# patch missing values
 activity_nomissing <- activity %>%
     inner_join(interval_medians) %>%
     mutate(steps = ifelse(is.na(steps), int_med, steps)) %>%
@@ -208,6 +210,7 @@ and report the mean and median total number of steps taken per day.**
 
 
 ```r
+# histogram of total daily steps - using imputed missing values data
 tsteps_nomissing <- activity_nomissing %>%
     group_by(date) %>%
     summarize(total_steps = sum(steps))
@@ -224,7 +227,9 @@ ag +
 
 ![](PA1_template_files/figure-html/histo plot - round 2-1.png)<!-- -->
 
+
 ```r
+# table of mean and median values
 kable(
     tsteps_nomissing %>%
         summarize(mean_daily_steps = round(mean(total_steps, na.rm=T), 2),
